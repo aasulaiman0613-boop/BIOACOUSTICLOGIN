@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AVPS - The Future of Security</title>
+    <style>
+        body { background: #000; color: #0f0; font-family: 'Courier New', monospace; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+        .panel { border: 2px solid #0f0; padding: 20px; background: #050505; box-shadow: 0 0 20px #0f0; width: 400px; text-align: center; }
+        input[type=range] { width: 100%; cursor: crosshair; }
+        .lcd { background: #020; padding: 10px; border: 1px inset #0f0; margin: 10px 0; font-size: 1.2em; min-height: 1.5em; }
+        button { background: #0f0; color: #000; border: none; padding: 10px 20px; font-weight: bold; cursor: pointer; margin-top: 10px; width: 100%; }
+        button:active { background: #0a0; }
+        .hint { font-size: 0.7em; color: #0a0; margin-top: 5px; }
+    </style>
+</head>
+<body>
+
+<div class="panel">
+    <h2>BIO-ACOUSTIC LOGIN</h2>
+    <div class="lcd" id="display">READY...</div>
+    
+    <label>FREQUENCY (Hz)</label>
+    <input type="range" id="freq" min="260" max="525" step="0.01" value="260">
+    <div id="freq-val">260.00 Hz</div>
+
+    <label>NOTE DURATION (ms)</label>
+    <input type="range" id="duration" min="100" max="2000" step="1" value="500">
+    <div id="dur-val">500 ms</div>
+
+    <button id="play">PREVIEW FREQUENCY</button>
+    <button id="commit" style="background: #f00; color: #fff;">COMMIT NOTE TO BUFFER</button>
+    
+    <div class="hint">Note: Password must match the harmonic signature of "PASSWORD"</div>
+    <div class="lcd" id="buffer">Buffer: </div>
+    <button id="submit">SUBMIT HARMONIC ARRAY</button>
+</div>
+
+<script>
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    let passwordBuffer = [];
+
+    // Map letters to very specific, difficult frequencies
+    const getFreqForChar = (char) => 261.63 + (alphabet.indexOf(char.toUpperCase()) * 10.06);
+
+    const freqSlider = document.getElementById('freq');
+    const durSlider = document.getElementById('duration');
+    const display = document.getElementById('display');
+
+    freqSlider.oninput = () => {
+        const f = parseFloat(freqSlider.value);
+        document.getElementById('freq-val').innerText = f.toFixed(2) + " Hz";
+        // Find closest letter
+        let closest = "?";
+        alphabet.split('').forEach(l => {
+            if (Math.abs(getFreqForChar(l) - f) < 1) closest = l;
+        });
+        display.innerText = "DETECTING: " + closest;
+    };
+
+    durSlider.oninput = () => document.getElementById('dur-val').innerText = durSlider.value + " ms";
+
+    document.getElementById('play').onclick = () => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.frequency.value = parseFloat(freqSlider.value);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + parseFloat(durSlider.value)/1000);
+        osc.stop(ctx.currentTime + parseFloat(durSlider.value)/1000);
+    };
+
+    document.getElementById('commit').onclick = () => {
+        const f = parseFloat(freqSlider.value);
+        const d = parseInt(durSlider.value);
+        passwordBuffer.push({f, d});
+        document.getElementById('buffer').innerText = "Buffer: " + "*".repeat(passwordBuffer.length);
+        display.innerText = "NOTE CAPTURED";
+        
+        // Randomly reset the sliders to make it harder to chain notes
+        freqSlider.value = 260 + (Math.random() * 200);
+        durSlider.value = 100 + (Math.random() * 1000);
+    };
+
+    document.getElementById('submit').onclick = () => {
+        // In a real "worst" design, this would check against "PASSWORD" 
+        // but it requires 0.01 precision. It is effectively impossible.
+        alert("CRITICAL ERROR: Harmonic Resonance Mismatch of " + (Math.random() * 100).toFixed(4) + "%. Buffer Cleared.");
+        passwordBuffer = [];
+        document.getElementById('buffer').innerText = "Buffer: ";
+    };
+</script>
+</body>
+</html>
