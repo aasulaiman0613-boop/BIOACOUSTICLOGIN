@@ -2,64 +2,106 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>AVPS - The Future of Security</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SECURE BIO-HARMONIC UPLINK</title>
     <style>
-        body { background: #000; color: #0f0; font-family: 'Courier New', monospace; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; }
-        .panel { border: 2px solid #0f0; padding: 20px; background: #050505; box-shadow: 0 0 20px #0f0; width: 400px; text-align: center; }
-        input[type=range] { width: 100%; cursor: crosshair; }
-        .lcd { background: #020; padding: 10px; border: 1px inset #0f0; margin: 10px 0; font-size: 1.2em; min-height: 1.5em; }
-        button { background: #0f0; color: #000; border: none; padding: 10px 20px; font-weight: bold; cursor: pointer; margin-top: 10px; width: 100%; }
-        button:active { background: #0a0; }
-        .hint { font-size: 0.7em; color: #0a0; margin-top: 5px; }
+        body { 
+            background: #050505; color: #0f0; font-family: 'Courier New', monospace; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; 
+            height: 100vh; margin: 0; overflow: hidden;
+        }
+        .panel { 
+            border: 3px solid #0f0; padding: 30px; background: #000; 
+            box-shadow: 0 0 30px #0f0; width: 450px; text-align: center;
+            transition: all 0.1s;
+        }
+        #timer { color: #f00; font-size: 1.8em; font-weight: bold; margin-bottom: 15px; text-shadow: 0 0 10px #f00; }
+        .lcd { background: #020; padding: 15px; border: 1px inset #0f0; margin: 15px 0; font-size: 1.1em; color: #0f0; }
+        input[type=range] { width: 100%; cursor: none; filter: hue-rotate(90deg); }
+        button { 
+            background: #0f0; color: #000; border: none; padding: 12px; 
+            font-weight: bold; cursor: pointer; margin-top: 10px; width: 100%;
+            text-transform: uppercase;
+        }
+        button:hover { background: #fff; }
+        #commit { background: #f00; color: #fff; }
+        #buffer { font-size: 1.5em; letter-spacing: 5px; color: #ff0; }
+        .warning { color: #f00; font-size: 0.7em; margin-top: 10px; }
     </style>
 </head>
 <body>
 
-<div class="panel">
-    <h2>BIO-ACOUSTIC LOGIN</h2>
-    <div class="lcd" id="display">READY...</div>
+<div class="panel" id="main-panel">
+    <div id="timer">SESSION EXPIRES IN: 120s</div>
+    <h2>BIO-ACOUSTIC AUTHENTICATION</h2>
     
-    <label>FREQUENCY (Hz)</label>
+    <div class="lcd" id="display">CALIBRATING...</div>
+    
+    <label>TARGET RESONANCE (Hz)</label>
     <input type="range" id="freq" min="260" max="525" step="0.01" value="260">
     <div id="freq-val">260.00 Hz</div>
 
-    <label>NOTE DURATION (ms)</label>
+    <label>PULSE DURATION (ms)</label>
     <input type="range" id="duration" min="100" max="2000" step="1" value="500">
     <div id="dur-val">500 ms</div>
 
     <button id="play">PREVIEW FREQUENCY</button>
-    <button id="commit" style="background: #f00; color: #fff;">COMMIT NOTE TO BUFFER</button>
+    <button id="commit">COMMIT NOTE (Fee: -10s)</button>
     
-    <div class="hint">Note: Password must match the harmonic signature of "PASSWORD"</div>
     <div class="lcd" id="buffer">Buffer: </div>
     <button id="submit">SUBMIT HARMONIC ARRAY</button>
+    <div class="warning">CAUTION: Circuit heat causes harmonic drift. Speed is essential.</div>
 </div>
 
 <script>
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
     const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     let passwordBuffer = [];
-
-    // Map letters to very specific, difficult frequencies
-    const getFreqForChar = (char) => 261.63 + (alphabet.indexOf(char.toUpperCase()) * 10.06);
+    let circuitHeat = 0;
+    let timeLeft = 120;
 
     const freqSlider = document.getElementById('freq');
     const durSlider = document.getElementById('duration');
     const display = document.getElementById('display');
+    const timerDisplay = document.getElementById('timer');
+    const panel = document.getElementById('main-panel');
+
+    // 1. THE INCINERATOR TIMER
+    const countdown = setInterval(() => {
+        timeLeft--;
+        timerDisplay.innerText = `SESSION EXPIRES IN: ${timeLeft}s`;
+
+        if (timeLeft <= 30) {
+            panel.style.transform = `translate(${Math.random()*4}px, ${Math.random()*4}px)`;
+            timerDisplay.style.color = (timeLeft % 2 === 0) ? "#f00" : "#fff";
+        }
+
+        if (timeLeft <= 0) {
+            clearInterval(countdown);
+            alert("SECURITY CRITICAL: TIME EXCEEDED. Data has been incinerated for your protection.");
+            location.reload();
+        }
+    }, 1000);
+
+    // 2. HARMONIC DRIFT LOGIC
+    const getFreqForChar = (char) => {
+        const base = 261.63 + (alphabet.indexOf(char.toUpperCase()) * 10.06);
+        return base + (Math.random() * circuitHeat);
+    };
 
     freqSlider.oninput = () => {
         const f = parseFloat(freqSlider.value);
         document.getElementById('freq-val').innerText = f.toFixed(2) + " Hz";
-        // Find closest letter
         let closest = "?";
         alphabet.split('').forEach(l => {
-            if (Math.abs(getFreqForChar(l) - f) < 1) closest = l;
+            if (Math.abs(getFreqForChar(l) - f) < 1.5) closest = l;
         });
-        display.innerText = "DETECTING: " + closest;
+        display.innerText = "DETECTED HARMONIC: " + closest;
     };
 
     durSlider.oninput = () => document.getElementById('dur-val').innerText = durSlider.value + " ms";
 
+    // 3. AUDIO PREVIEW
     document.getElementById('play').onclick = () => {
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
@@ -71,24 +113,27 @@
         osc.stop(ctx.currentTime + parseFloat(durSlider.value)/1000);
     };
 
+    // 4. THE PROCESSING FEE & DRIFT INCREASE
     document.getElementById('commit').onclick = () => {
-        const f = parseFloat(freqSlider.value);
-        const d = parseInt(durSlider.value);
-        passwordBuffer.push({f, d});
-        document.getElementById('buffer').innerText = "Buffer: " + "*".repeat(passwordBuffer.length);
-        display.innerText = "NOTE CAPTURED";
+        // Penalty
+        timeLeft -= 10;
+        circuitHeat += 5.0; // Increase difficulty
         
-        // Randomly reset the sliders to make it harder to chain notes
+        const f = parseFloat(freqSlider.value);
+        passwordBuffer.push(f);
+        document.getElementById('buffer').innerText = "Buffer: " + "*".repeat(passwordBuffer.length);
+        display.innerText = "NOTE COMMITTED (-10s FEE)";
+        
+        // Chaos: Randomize sliders after every commit
         freqSlider.value = 260 + (Math.random() * 200);
         durSlider.value = 100 + (Math.random() * 1000);
     };
 
+    // 5. THE ULTIMATE GASLIGHT SUBMIT
     document.getElementById('submit').onclick = () => {
-        // In a real "worst" design, this would check against "PASSWORD" 
-        // but it requires 0.01 precision. It is effectively impossible.
-        alert("CRITICAL ERROR: Harmonic Resonance Mismatch of " + (Math.random() * 100).toFixed(4) + "%. Buffer Cleared.");
-        passwordBuffer = [];
-        document.getElementById('buffer').innerText = "Buffer: ";
+        const failChance = (Math.random() * 0.05).toFixed(5);
+        alert(`AUTHENTICATION FAILED: Frequency deviation of ${failChance}% detected in harmonic node ${passwordBuffer.length}. Please recalibrate and try again.`);
+        location.reload(); // Never let them win
     };
 </script>
 </body>
