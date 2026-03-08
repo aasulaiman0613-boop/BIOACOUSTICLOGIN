@@ -5,41 +5,65 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TERMINAL CRITICAL: BIO-HARMONIC DRIFT</title>
     <style>
+        :root { --glitch-color: #0f0; }
         body { 
             background: #050505; color: #0f0; font-family: 'Courier New', monospace; 
             display: flex; flex-direction: column; align-items: center; justify-content: center; 
             height: 100vh; margin: 0; overflow: hidden;
-            transition: filter 0.1s;
+            perspective: 1000px;
         }
         .panel { 
             border: 3px solid #0f0; padding: 30px; background: #000; 
             box-shadow: 0 0 30px #0f0; width: 450px; text-align: center;
-            position: relative; transition: transform 0.05s;
+            position: relative; z-index: 10;
         }
         #timer { color: #f00; font-size: 1.8em; font-weight: bold; margin-bottom: 15px; text-shadow: 0 0 10px #f00; }
         .lcd { background: #020; padding: 15px; border: 1px inset #0f0; margin: 15px 0; font-size: 1.1em; color: #0f0; min-height: 1.2em; }
         input[type=range] { width: 100%; cursor: none; filter: hue-rotate(90deg); margin-bottom: 10px; }
+        
         button { 
             background: #0f0; color: #000; border: none; padding: 12px; 
-            font-weight: bold; cursor: pointer; margin-top: 10px; width: 100%;
-            text-transform: uppercase; position: relative;
+            font-weight: bold; cursor: crosshair; margin-top: 10px; width: 100%;
+            text-transform: uppercase;
         }
-        button:hover { background: #fff; }
-        #commit { background: #f00; color: #fff; }
+
+        /* Extreme Distortions */
+        .extreme-distort {
+            animation: shake 0.1s infinite, hue-rot 0.5s infinite;
+            filter: contrast(200%) brightness(150%);
+        }
+
+        @keyframes shake {
+            0% { transform: translate(2px, 2px) rotate(0deg); }
+            50% { transform: translate(-2px, -2px) rotate(1deg); }
+            100% { transform: translate(2px, -2px) rotate(-1deg); }
+        }
+
+        @keyframes hue-rot {
+            from { filter: hue-rotate(0deg) saturate(5); }
+            to { filter: hue-rotate(360deg) saturate(10); }
+        }
+
+        .evasive-target {
+            position: fixed;
+            width: 150px;
+            z-index: 9999;
+            transition: transform 0.05s linear;
+        }
+
+        .decoy { opacity: 0.7; pointer-events: auto; }
+
         #buffer { font-size: 1.5em; letter-spacing: 5px; color: #ff0; }
-        .warning { color: #f00; font-size: 0.7em; margin-top: 10px; text-transform: uppercase; }
-        
-        /* The "Runaway" animation class */
-        .evade { position: absolute; transition: all 0.2s ease; }
+        .warning { color: #f00; font-size: 0.7em; margin-top: 10px; font-weight: bold; }
     </style>
 </head>
-<body>
+<body id="body">
 
 <div class="panel" id="main-panel">
     <div id="timer">SESSION EXPIRES IN: 120s</div>
     <h2>BIO-ACOUSTIC AUTHENTICATION</h2>
     
-    <div class="lcd" id="display">SYSTEM READY. CALIBRATE FREQUENCY.</div>
+    <div class="lcd" id="display">INITIALIZING...</div>
     
     <label>TARGET RESONANCE (Hz)</label>
     <input type="range" id="freq" min="260" max="525" step="0.01" value="260">
@@ -50,14 +74,13 @@
     <div id="dur-val">500 ms</div>
 
     <button id="play">PREVIEW FREQUENCY</button>
-    <div style="height: 60px; position: relative; margin-top: 10px;">
-        <button id="commit">COMMIT NOTE (Fee: -10s)</button>
-    </div>
     
     <div class="lcd" id="buffer">Buffer: </div>
     <button id="submit">SUBMIT HARMONIC ARRAY</button>
-    <div class="warning">CAUTION: CIRCUIT HEAT DETECTED. DO NOT TOUCH THE SENSORS.</div>
+    <div class="warning">CRITICAL ERROR: OPTICAL SENSORS FAILING.</div>
 </div>
+
+<button id="commit" class="evasive-target" style="top: 80%; left: 45%;">COMMIT NOTE (-10s)</button>
 
 <script>
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -67,131 +90,111 @@
     let timeLeft = 120;
     let isSubmitting = false;
 
-    // Elements
     const freqSlider = document.getElementById('freq');
-    const durSlider = document.getElementById('duration');
-    const display = document.getElementById('display');
     const timerDisplay = document.getElementById('timer');
     const panel = document.getElementById('main-panel');
     const commitBtn = document.getElementById('commit');
+    const body = document.getElementById('body');
 
-    // 1. THE AGGRESSIVE TIMER & VISUAL GLITCHES
+    // 1. QUANTUM EVADE (The Button is a Lie)
+    const moveButton = (btn) => {
+        const x = Math.random() * (window.innerWidth - 150);
+        const y = Math.random() * (window.innerHeight - 50);
+        btn.style.left = x + 'px';
+        btn.style.top = y + 'px';
+    };
+
+    document.addEventListener('mousemove', (e) => {
+        const btnRect = commitBtn.getBoundingClientRect();
+        const btnCenter = { x: btnRect.left + 75, y: btnRect.top + 25 };
+        const dist = Math.hypot(e.clientX - btnCenter.x, e.clientY - btnCenter.y);
+
+        // If mouse gets close, teleport
+        if (dist < 120) {
+            moveButton(commitBtn);
+            if (circuitHeat > 20 && Math.random() > 0.7) spawnDecoy();
+        }
+    });
+
+    function spawnDecoy() {
+        const decoy = commitBtn.cloneNode(true);
+        decoy.classList.add('decoy');
+        decoy.innerText = "COMMIT NOTE";
+        body.appendChild(decoy);
+        moveButton(decoy);
+        decoy.onclick = () => {
+            alert("DECOY TRIGGERED: DATA CORRUPTION DETECTED.");
+            location.reload();
+        };
+        setTimeout(() => decoy.remove(), 2000);
+    }
+
+    // 2. EXTREME DISTORTION LOGIC
     const countdown = setInterval(() => {
         if(isSubmitting) return;
         timeLeft--;
         timerDisplay.innerText = `SESSION EXPIRES IN: ${timeLeft}s`;
 
-        // Screen Shake & Blur logic
-        if (timeLeft <= 60) {
-            panel.style.transform = `translate(${Math.random()*6 - 3}px, ${Math.random()*6 - 3}px)`;
-            if (Math.random() > 0.8) {
-                document.body.style.filter = `blur(${Math.random() * 2}px) brightness(${Math.random() + 0.8}) contrast(1.5)`;
-                setTimeout(() => document.body.style.filter = 'none', 100);
-            }
+        if (timeLeft < 90) {
+            body.className = (timeLeft % 2 === 0) ? 'extreme-distort' : '';
+            panel.style.transform = `rotateY(${Math.sin(timeLeft)*20}deg) rotateX(${Math.cos(timeLeft)*20}deg)`;
         }
 
         if (timeLeft <= 0) {
-            clearInterval(countdown);
-            alert("SECURITY CRITICAL: SESSION TERMINATED. HARD DRIVE WIPED.");
-            location.reload();
+            body.innerHTML = "<h1 style='color:red; font-size:10vw;'>SYSTEM PURGED</h1>";
+            setTimeout(() => location.reload(), 2000);
         }
     }, 1000);
 
-    // 2. THE RUNAWAY BUTTON (Physical Annoyance)
-    commitBtn.onmouseover = () => {
-        if (circuitHeat > 10) {
-            commitBtn.classList.add('evade');
-            commitBtn.style.left = Math.random() * 50 + "%";
-            commitBtn.style.top = Math.random() * 20 + "px";
-        }
-    };
-
-    // 3. INPUT JITTER (The "Ghost" Slider)
-    freqSlider.oninput = () => {
-        const f = parseFloat(freqSlider.value);
-        document.getElementById('freq-val').innerText = f.toFixed(2) + " Hz";
-        
-        // Jitter effect
-        if(circuitHeat > 5 && Math.random() > 0.9) {
-            freqSlider.value = f + (Math.random() * 10 - 5);
-        }
-
-        let closest = "?";
-        alphabet.split('').forEach(l => {
-            const base = 261.63 + (alphabet.indexOf(l) * 10.06);
-            const driftedBase = base + (Math.random() * circuitHeat);
-            if (Math.abs(driftedBase - f) < 1.0) closest = l;
-        });
-        display.innerText = "DETECTED HARMONIC: " + closest;
-    };
-
-    durSlider.oninput = () => document.getElementById('dur-val').innerText = durSlider.value + " ms";
-
-    // 4. HARSH AUDIO PREVIEW (Sawtooth + Hum)
+    // 3. AUDIO (EAR PIERCING)
     document.getElementById('play').onclick = () => {
         if(ctx.state === 'suspended') ctx.resume();
-        
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
-        const hum = ctx.createOscillator();
-        const humGain = ctx.createGain();
-
-        osc.type = 'sawtooth'; // Aggressive sound
-        osc.frequency.value = parseFloat(freqSlider.value);
         
-        hum.frequency.value = 60; // Electrical hum
-        humGain.gain.value = 0.1;
+        osc.type = 'square'; // Extremely harsh
+        osc.frequency.setValueAtTime(parseFloat(freqSlider.value), ctx.currentTime);
+        
+        // Add random pitch modulation (jitter)
+        osc.frequency.exponentialRampToValueAtTime(parseFloat(freqSlider.value) + circuitHeat, ctx.currentTime + 0.1);
+
+        gain.gain.setValueAtTime(0.2, ctx.currentTime);
+        gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.5);
 
         osc.connect(gain);
-        hum.connect(humGain);
         gain.connect(ctx.destination);
-        humGain.connect(ctx.destination);
-
         osc.start();
-        hum.start();
-
-        const duration = parseFloat(durSlider.value)/1000;
-        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration);
-        osc.stop(ctx.currentTime + duration);
-        hum.stop(ctx.currentTime + duration);
+        osc.stop(ctx.currentTime + 0.5);
     };
 
-    // 5. THE COMMIT PENALTY
+    // 4. THE COMMIT TRAP
     commitBtn.onclick = () => {
-        if (!confirm("Confirm 10s energy expenditure for note commit?")) return;
-        
-        timeLeft -= 10;
-        circuitHeat += 8.0;
-        const f = parseFloat(freqSlider.value);
-        passwordBuffer.push(f);
+        timeLeft -= 15; // Increased penalty
+        circuitHeat += 15;
+        passwordBuffer.push(parseFloat(freqSlider.value));
         document.getElementById('buffer').innerText = "Buffer: " + "*".repeat(passwordBuffer.length);
-        display.innerText = "NOTE COMMITTED. DRIFT INCREASED.";
-        
-        // Reset button position and randomize sliders
-        commitBtn.classList.remove('evade');
-        commitBtn.style.left = "0";
-        commitBtn.style.top = "0";
-        freqSlider.value = 260 + (Math.random() * 200);
+        document.getElementById('display').innerText = "NODE LOCKED. HEAT CRITICAL.";
+        moveButton(commitBtn);
     };
 
-    // 6. THE FAKE PROGRESS GASLIGHT
+    // 5. SUBMIT GASLIGHT
     document.getElementById('submit').onclick = () => {
         isSubmitting = true;
-        let progress = 0;
-        display.innerText = "UPLOADING HARMONIC ARRAY...";
-        
+        panel.style.animation = "hue-rot 0.1s infinite";
+        let p = 0;
         const loader = setInterval(() => {
-            progress += Math.floor(Math.random() * 5);
-            document.getElementById('buffer').innerText = `ANALYZING: ${progress}%`;
-            
-            if (progress >= 100) {
+            p += 1;
+            document.getElementById('display').innerText = `DECRYPTING: ${p}%`;
+            if (p >= 99) {
                 clearInterval(loader);
-                const dev = (Math.random() * 0.0001).toFixed(7);
-                alert(`CRITICAL FAILURE: Frequency deviation of ${dev}% detected in Node ${Math.floor(Math.random()*passwordBuffer.length)+1}. RECALIBRATE ENTIRE ARRAY.`);
-                location.reload();
+                setTimeout(() => {
+                    alert("ERROR: 0x0000F2 - Harmonic Sync Lost. User too slow.");
+                    location.reload();
+                }, 1000);
             }
-        }, 200);
+        }, 50);
     };
+
 </script>
 </body>
 </html>
