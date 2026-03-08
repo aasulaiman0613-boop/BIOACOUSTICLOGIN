@@ -3,76 +3,163 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>⚠️ CRITICAL SYSTEM INSTABILITY ⚠️</title>
+    <title>Bio-Harmonic Uplink</title>
     <style>
-        :root { --glitch-green: #0f0; --error-red: #f00; }
-        body { 
-            background: #000; color: var(--glitch-green); font-family: 'Courier New', monospace; 
-            display: flex; align-items: center; justify-content: center; 
-            height: 100vh; margin: 0; overflow: hidden;
-        }
-        .panel { 
-            border: 4px double var(--glitch-green); padding: 30px; background: #050505; 
-            box-shadow: 0 0 50px rgba(0, 255, 0, 0.2); width: 450px; text-align: center;
-            position: relative; z-index: 10;
-        }
-        #timer { color: var(--error-red); font-size: 2em; font-weight: bold; text-shadow: 0 0 15px var(--error-red); }
-        .lcd { background: #010; padding: 15px; border: 1px solid var(--glitch-green); margin: 15px 0; font-size: 1.1em; }
-        
-        input[type=range] { width: 100%; cursor: none; filter: hue-rotate(280deg); margin: 10px 0; }
-        
-        button { 
-            background: var(--glitch-green); color: #000; border: none; padding: 15px; 
-            font-weight: bold; cursor: crosshair; width: 100%; text-transform: uppercase;
+        :root {
+            --bg: #f0f2f5;
+            --glass: rgba(255, 255, 255, 0.7);
+            --border: rgba(255, 255, 255, 0.3);
+            --text: #1d1d1f;
+            --accent: #007aff;
+            --danger: #ff3b30;
+            --shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
         }
 
-        /* Extreme Visual Distortion */
-        .glitch-active { animation: flash 0.05s infinite; }
-        @keyframes flash {
-            0% { opacity: 1; filter: invert(0); }
-            50% { opacity: 0.8; filter: invert(1) sepia(1) saturate(5); }
-            100% { opacity: 1; filter: invert(0); }
+        [data-theme="dark"] {
+            --bg: #0f0f0f;
+            --glass: rgba(30, 30, 30, 0.7);
+            --border: rgba(255, 255, 255, 0.1);
+            --text: #f5f5f7;
+            --accent: #0a84ff;
+            --shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
         }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+            transition: background 0.5s ease;
+        }
+
+        /* Glassmorphism Panel */
+        .glass-panel {
+            background: var(--glass);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 40px;
+            width: 400px;
+            box-shadow: var(--shadow);
+            text-align: center;
+            position: relative;
+            z-index: 10;
+        }
+
+        h2 { font-weight: 600; letter-spacing: -0.5px; margin-bottom: 25px; }
+
+        #timer {
+            font-variant-numeric: tabular-nums;
+            font-weight: 700;
+            color: var(--danger);
+            margin-bottom: 20px;
+        }
+
+        .status-display {
+            background: rgba(0,0,0,0.05);
+            padding: 15px;
+            border-radius: 12px;
+            margin: 20px 0;
+            font-size: 0.9em;
+            font-weight: 500;
+        }
+
+        /* Sleek Controls */
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+            margin: 15px 0;
+        }
+
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 6px;
+            background: var(--accent);
+            border-radius: 3px;
+        }
+
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 20px;
+            width: 20px;
+            border-radius: 50%;
+            background: #fff;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+            margin-top: -7px;
+            cursor: pointer;
+        }
+
+        button {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 12px;
+            font-weight: 600;
+            width: 100%;
+            margin-top: 10px;
+            transition: opacity 0.2s, transform 0.1s;
+        }
+
+        button:active { transform: scale(0.98); }
 
         .evasive-target {
-            position: fixed; width: 160px; z-index: 999;
-            box-shadow: 0 0 20px var(--error-red);
-            transition: top 0.1s ease-out, left 0.1s ease-out;
-            background: var(--error-red); color: white;
+            position: fixed;
+            width: 140px;
+            background: var(--danger);
+            z-index: 999;
+            box-shadow: 0 10px 20px rgba(255, 59, 48, 0.3);
         }
 
-        #buffer { font-size: 1.5em; color: #ff0; text-shadow: 0 0 5px #ff0; }
-        .scanline {
-            width: 100%; height: 2px; background: rgba(0, 255, 0, 0.1);
-            position: absolute; top: 0; left: 0; pointer-events: none;
-            animation: scan 2s linear infinite;
+        #theme-toggle {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: auto;
+            background: var(--glass);
+            color: var(--text);
+            padding: 8px 15px;
+            font-size: 0.8em;
         }
-        @keyframes scan { from { top: 0; } to { top: 100%; } }
+
+        .glitch-overlay {
+            position: fixed;
+            top:0; left:0; width:100%; height:100%;
+            pointer-events: none;
+            background: var(--danger);
+            opacity: 0;
+            z-index: 1000;
+        }
     </style>
 </head>
-<body id="main-body">
-<div class="scanline"></div>
+<body id="body">
+    <div class="glitch-overlay" id="overlay"></div>
+    <button id="theme-toggle">Switch Theme</button>
 
-<div class="panel" id="ui-panel">
-    <div id="timer">TERMINATION IN: 120s</div>
-    <h2 style="letter-spacing: -2px;">UNSTABLE UPLINK</h2>
-    
-    <div class="lcd" id="display">CALIBRATING BIO-RESONANCE...</div>
-    
-    <label>FREQUENCY (DRIFT ACTIVE)</label>
-    <input type="range" id="freq" min="260" max="525" step="0.01" value="300">
-    <div id="freq-val">300.00 Hz</div>
+    <div class="glass-panel" id="ui-panel">
+        <div id="timer">Expires in 120s</div>
+        <h2>Harmonic Uplink</h2>
+        
+        <div class="status-display" id="display">System Calibration Required</div>
+        
+        <div style="text-align: left; font-size: 0.8em; opacity: 0.7;">Frequency Target</div>
+        <input type="range" id="freq" min="260" max="525" step="0.01" value="300">
+        <div id="freq-val" style="font-weight: 700;">300.00 Hz</div>
 
-    <label>PULSE WIDTH</label>
-    <input type="range" id="duration" min="100" max="2000" step="1" value="500">
+        <button id="play">Preview Pulse</button>
+        
+        <div class="status-display" id="buffer">Buffer: Empty</div>
+        <button id="submit">Uplink Core</button>
+    </div>
 
-    <button id="play" style="margin-bottom:10px;">PREVIEW HARMONIC</button>
-    
-    <div class="lcd" id="buffer">BUFFER: [EMPTY]</div>
-    <button id="submit">UPLINK TO CORE</button>
-</div>
-
-<button id="commit" class="evasive-target">COMMIT NOTE</button>
+    <button id="commit" class="evasive-target" style="top: 80%; left: 45%;">Commit Note</button>
 
 <script>
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -80,108 +167,93 @@
     let timeLeft = 120;
     let buffer = [];
 
-    const body = document.getElementById('main-body');
+    const body = document.getElementById('body');
     const freqSlider = document.getElementById('freq');
     const commitBtn = document.getElementById('commit');
+    const overlay = document.getElementById('overlay');
 
-    // 1. THE DRIFT: Sliders move on their own
+    // Theme Toggle
+    document.getElementById('theme-toggle').onclick = () => {
+        const current = body.getAttribute('data-theme');
+        body.setAttribute('data-theme', current === 'dark' ? 'light' : 'dark');
+    };
+
+    // 1. Sleek Drift (The sliders still move)
     setInterval(() => {
-        if (circuitHeat > 5) {
-            const drift = (Math.random() - 0.5) * (circuitHeat / 2);
+        if (circuitHeat > 2) {
+            const drift = (Math.random() - 0.5) * (circuitHeat / 3);
             freqSlider.value = parseFloat(freqSlider.value) + drift;
             document.getElementById('freq-val').innerText = parseFloat(freqSlider.value).toFixed(2) + " Hz";
         }
-    }, 50);
+    }, 60);
 
-    // 2. THE EVASION: Improved button "flight" logic
+    // 2. High-Speed Evasion
     document.addEventListener('mousemove', (e) => {
         const rect = commitBtn.getBoundingClientRect();
-        const mouseX = e.clientX;
-        const mouseY = e.clientY;
-        const btnX = rect.left + rect.width / 2;
-        const btnY = rect.top + rect.height / 2;
+        const dist = Math.hypot(e.clientX - (rect.left + 70), e.clientY - (rect.top + 25));
 
-        const distance = Math.hypot(mouseX - btnX, mouseY - btnY);
+        if (dist < 150) {
+            const angle = Math.atan2((rect.top + 25) - e.clientY, (rect.left + 70) - e.clientX);
+            let newX = rect.left + Math.cos(angle) * 250;
+            let newY = rect.top + Math.sin(angle) * 250;
 
-        if (distance < 150) {
-            // Calculate vector away from mouse
-            const angle = Math.atan2(btnY - mouseY, btnX - mouseX);
-            const moveDist = 200; 
-            let newX = btnX + Math.cos(angle) * moveDist;
-            let newY = btnY + Math.sin(angle) * moveDist;
-
-            // Constrain to screen
-            newX = Math.max(50, Math.min(window.innerWidth - 200, newX));
-            newY = Math.max(50, Math.min(window.innerHeight - 100, newY));
+            newX = Math.max(20, Math.min(window.innerWidth - 160, newX));
+            newY = Math.max(20, Math.min(window.innerHeight - 60, newY));
 
             commitBtn.style.left = newX + 'px';
             commitBtn.style.top = newY + 'px';
         }
     });
 
-    // 3. THE SENSORY OVERLOAD
+    // 3. Modern "Stress" Visuals
     const timer = setInterval(() => {
         timeLeft--;
-        document.getElementById('timer').innerText = `TERMINATION IN: ${timeLeft}s`;
+        document.getElementById('timer').innerText = `Expires in ${timeLeft}s`;
 
-        if (timeLeft < 100) {
-            body.classList.toggle('glitch-active', timeLeft % 2 === 0);
+        if (timeLeft < 30) {
+            overlay.style.opacity = (timeLeft % 2 === 0) ? '0.1' : '0';
         }
 
         if (timeLeft <= 0) {
             clearInterval(timer);
-            body.innerHTML = "<h1 style='color:white; font-size:5em;'>MEMORY LEAK: SYSTEM PURGED</h1>";
-            setTimeout(() => location.reload(), 1500);
+            alert("Session timeout. Local data encrypted.");
+            location.reload();
         }
     }, 1000);
 
-    // 4. THE HARSH AUDIO (Square wave + Gain Jitter)
+    // 4. Clean Audio Engine
     document.getElementById('play').onclick = () => {
         if(audioCtx.state === 'suspended') audioCtx.resume();
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
         
-        osc.type = 'square';
+        osc.type = 'sine'; // Sleeker sound for modern UI
         osc.frequency.value = parseFloat(freqSlider.value);
         
-        // Add a "broken" volume flicker
-        gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-        for(let i=0; i<10; i++) {
-            gain.gain.exponentialRampToValueAtTime(Math.random() * 0.2 + 0.01, audioCtx.currentTime + (i * 0.05));
-        }
+        gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.4);
 
         osc.connect(gain);
         gain.connect(audioCtx.destination);
         osc.start();
-        osc.stop(audioCtx.currentTime + 0.5);
+        osc.stop(audioCtx.currentTime + 0.4);
     };
 
-    // 5. THE COMMIT TRAP
+    // 5. The "Professional" Trap
     commitBtn.onclick = () => {
-        circuitHeat += 20;
-        timeLeft -= 12;
+        circuitHeat += 15;
+        timeLeft -= 10;
         buffer.push(freqSlider.value);
-        document.getElementById('buffer').innerText = "BUFFER: " + "█".repeat(buffer.length);
-        document.getElementById('display').innerText = "NODE CAPTURED. HEAT RISING.";
-        
-        // Spawn a fake error message
-        const err = document.createElement('div');
-        err.style.position = 'fixed';
-        err.style.left = Math.random() * 80 + '%';
-        err.style.top = Math.random() * 80 + '%';
-        err.style.color = 'red';
-        err.innerText = "CRITICAL_DRIFT_DETECTED";
-        body.appendChild(err);
-        setTimeout(() => err.remove(), 1000);
+        document.getElementById('buffer').innerText = "Buffer: " + "• ".repeat(buffer.length);
+        document.getElementById('display').innerText = "Calibration Segment Saved";
     };
 
-    // 6. THE FINAL FAIL
     document.getElementById('submit').onclick = () => {
-        document.getElementById('display').innerText = "VERIFYING HARMONIC INTEGRITY...";
+        document.getElementById('display').innerText = "Authenticating with Server...";
         setTimeout(() => {
-            alert("UPLINK DENIED: Phase variance exceeds 0.0000001%. Local data incinerated.");
+            alert("Uplink Refused: Subtle frequency jitter detected in packet stream.");
             location.reload();
-        }, 2000);
+        }, 2500);
     };
 </script>
 </body>
