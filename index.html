@@ -3,30 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SECURE BIO-HARMONIC UPLINK</title>
+    <title>TERMINAL CRITICAL: BIO-HARMONIC DRIFT</title>
     <style>
         body { 
             background: #050505; color: #0f0; font-family: 'Courier New', monospace; 
             display: flex; flex-direction: column; align-items: center; justify-content: center; 
             height: 100vh; margin: 0; overflow: hidden;
+            transition: filter 0.1s;
         }
         .panel { 
             border: 3px solid #0f0; padding: 30px; background: #000; 
             box-shadow: 0 0 30px #0f0; width: 450px; text-align: center;
-            transition: all 0.1s;
+            position: relative; transition: transform 0.05s;
         }
         #timer { color: #f00; font-size: 1.8em; font-weight: bold; margin-bottom: 15px; text-shadow: 0 0 10px #f00; }
-        .lcd { background: #020; padding: 15px; border: 1px inset #0f0; margin: 15px 0; font-size: 1.1em; color: #0f0; }
-        input[type=range] { width: 100%; cursor: none; filter: hue-rotate(90deg); }
+        .lcd { background: #020; padding: 15px; border: 1px inset #0f0; margin: 15px 0; font-size: 1.1em; color: #0f0; min-height: 1.2em; }
+        input[type=range] { width: 100%; cursor: none; filter: hue-rotate(90deg); margin-bottom: 10px; }
         button { 
             background: #0f0; color: #000; border: none; padding: 12px; 
             font-weight: bold; cursor: pointer; margin-top: 10px; width: 100%;
-            text-transform: uppercase;
+            text-transform: uppercase; position: relative;
         }
         button:hover { background: #fff; }
         #commit { background: #f00; color: #fff; }
         #buffer { font-size: 1.5em; letter-spacing: 5px; color: #ff0; }
-        .warning { color: #f00; font-size: 0.7em; margin-top: 10px; }
+        .warning { color: #f00; font-size: 0.7em; margin-top: 10px; text-transform: uppercase; }
+        
+        /* The "Runaway" animation class */
+        .evade { position: absolute; transition: all 0.2s ease; }
     </style>
 </head>
 <body>
@@ -35,7 +39,7 @@
     <div id="timer">SESSION EXPIRES IN: 120s</div>
     <h2>BIO-ACOUSTIC AUTHENTICATION</h2>
     
-    <div class="lcd" id="display">CALIBRATING...</div>
+    <div class="lcd" id="display">SYSTEM READY. CALIBRATE FREQUENCY.</div>
     
     <label>TARGET RESONANCE (Hz)</label>
     <input type="range" id="freq" min="260" max="525" step="0.01" value="260">
@@ -46,11 +50,13 @@
     <div id="dur-val">500 ms</div>
 
     <button id="play">PREVIEW FREQUENCY</button>
-    <button id="commit">COMMIT NOTE (Fee: -10s)</button>
+    <div style="height: 60px; position: relative; margin-top: 10px;">
+        <button id="commit">COMMIT NOTE (Fee: -10s)</button>
+    </div>
     
     <div class="lcd" id="buffer">Buffer: </div>
     <button id="submit">SUBMIT HARMONIC ARRAY</button>
-    <div class="warning">CAUTION: Circuit heat causes harmonic drift. Speed is essential.</div>
+    <div class="warning">CAUTION: CIRCUIT HEAT DETECTED. DO NOT TOUCH THE SENSORS.</div>
 </div>
 
 <script>
@@ -59,81 +65,132 @@
     let passwordBuffer = [];
     let circuitHeat = 0;
     let timeLeft = 120;
+    let isSubmitting = false;
 
+    // Elements
     const freqSlider = document.getElementById('freq');
     const durSlider = document.getElementById('duration');
     const display = document.getElementById('display');
     const timerDisplay = document.getElementById('timer');
     const panel = document.getElementById('main-panel');
+    const commitBtn = document.getElementById('commit');
 
-    // 1. THE INCINERATOR TIMER
+    // 1. THE AGGRESSIVE TIMER & VISUAL GLITCHES
     const countdown = setInterval(() => {
+        if(isSubmitting) return;
         timeLeft--;
         timerDisplay.innerText = `SESSION EXPIRES IN: ${timeLeft}s`;
 
-        if (timeLeft <= 30) {
-            panel.style.transform = `translate(${Math.random()*4}px, ${Math.random()*4}px)`;
-            timerDisplay.style.color = (timeLeft % 2 === 0) ? "#f00" : "#fff";
+        // Screen Shake & Blur logic
+        if (timeLeft <= 60) {
+            panel.style.transform = `translate(${Math.random()*6 - 3}px, ${Math.random()*6 - 3}px)`;
+            if (Math.random() > 0.8) {
+                document.body.style.filter = `blur(${Math.random() * 2}px) brightness(${Math.random() + 0.8}) contrast(1.5)`;
+                setTimeout(() => document.body.style.filter = 'none', 100);
+            }
         }
 
         if (timeLeft <= 0) {
             clearInterval(countdown);
-            alert("SECURITY CRITICAL: TIME EXCEEDED. Data has been incinerated for your protection.");
+            alert("SECURITY CRITICAL: SESSION TERMINATED. HARD DRIVE WIPED.");
             location.reload();
         }
     }, 1000);
 
-    // 2. HARMONIC DRIFT LOGIC
-    const getFreqForChar = (char) => {
-        const base = 261.63 + (alphabet.indexOf(char.toUpperCase()) * 10.06);
-        return base + (Math.random() * circuitHeat);
+    // 2. THE RUNAWAY BUTTON (Physical Annoyance)
+    commitBtn.onmouseover = () => {
+        if (circuitHeat > 10) {
+            commitBtn.classList.add('evade');
+            commitBtn.style.left = Math.random() * 50 + "%";
+            commitBtn.style.top = Math.random() * 20 + "px";
+        }
     };
 
+    // 3. INPUT JITTER (The "Ghost" Slider)
     freqSlider.oninput = () => {
         const f = parseFloat(freqSlider.value);
         document.getElementById('freq-val').innerText = f.toFixed(2) + " Hz";
+        
+        // Jitter effect
+        if(circuitHeat > 5 && Math.random() > 0.9) {
+            freqSlider.value = f + (Math.random() * 10 - 5);
+        }
+
         let closest = "?";
         alphabet.split('').forEach(l => {
-            if (Math.abs(getFreqForChar(l) - f) < 1.5) closest = l;
+            const base = 261.63 + (alphabet.indexOf(l) * 10.06);
+            const driftedBase = base + (Math.random() * circuitHeat);
+            if (Math.abs(driftedBase - f) < 1.0) closest = l;
         });
         display.innerText = "DETECTED HARMONIC: " + closest;
     };
 
     durSlider.oninput = () => document.getElementById('dur-val').innerText = durSlider.value + " ms";
 
-    // 3. AUDIO PREVIEW
+    // 4. HARSH AUDIO PREVIEW (Sawtooth + Hum)
     document.getElementById('play').onclick = () => {
+        if(ctx.state === 'suspended') ctx.resume();
+        
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
+        const hum = ctx.createOscillator();
+        const humGain = ctx.createGain();
+
+        osc.type = 'sawtooth'; // Aggressive sound
         osc.frequency.value = parseFloat(freqSlider.value);
+        
+        hum.frequency.value = 60; // Electrical hum
+        humGain.gain.value = 0.1;
+
         osc.connect(gain);
+        hum.connect(humGain);
         gain.connect(ctx.destination);
+        humGain.connect(ctx.destination);
+
         osc.start();
-        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + parseFloat(durSlider.value)/1000);
-        osc.stop(ctx.currentTime + parseFloat(durSlider.value)/1000);
+        hum.start();
+
+        const duration = parseFloat(durSlider.value)/1000;
+        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration);
+        osc.stop(ctx.currentTime + duration);
+        hum.stop(ctx.currentTime + duration);
     };
 
-    // 4. THE PROCESSING FEE & DRIFT INCREASE
-    document.getElementById('commit').onclick = () => {
-        // Penalty
-        timeLeft -= 10;
-        circuitHeat += 5.0; // Increase difficulty
+    // 5. THE COMMIT PENALTY
+    commitBtn.onclick = () => {
+        if (!confirm("Confirm 10s energy expenditure for note commit?")) return;
         
+        timeLeft -= 10;
+        circuitHeat += 8.0;
         const f = parseFloat(freqSlider.value);
         passwordBuffer.push(f);
         document.getElementById('buffer').innerText = "Buffer: " + "*".repeat(passwordBuffer.length);
-        display.innerText = "NOTE COMMITTED (-10s FEE)";
+        display.innerText = "NOTE COMMITTED. DRIFT INCREASED.";
         
-        // Chaos: Randomize sliders after every commit
+        // Reset button position and randomize sliders
+        commitBtn.classList.remove('evade');
+        commitBtn.style.left = "0";
+        commitBtn.style.top = "0";
         freqSlider.value = 260 + (Math.random() * 200);
-        durSlider.value = 100 + (Math.random() * 1000);
     };
 
-    // 5. THE ULTIMATE GASLIGHT SUBMIT
+    // 6. THE FAKE PROGRESS GASLIGHT
     document.getElementById('submit').onclick = () => {
-        const failChance = (Math.random() * 0.05).toFixed(5);
-        alert(`AUTHENTICATION FAILED: Frequency deviation of ${failChance}% detected in harmonic node ${passwordBuffer.length}. Please recalibrate and try again.`);
-        location.reload(); // Never let them win
+        isSubmitting = true;
+        let progress = 0;
+        display.innerText = "UPLOADING HARMONIC ARRAY...";
+        
+        const loader = setInterval(() => {
+            progress += Math.floor(Math.random() * 5);
+            document.getElementById('buffer').innerText = `ANALYZING: ${progress}%`;
+            
+            if (progress >= 100) {
+                clearInterval(loader);
+                const dev = (Math.random() * 0.0001).toFixed(7);
+                alert(`CRITICAL FAILURE: Frequency deviation of ${dev}% detected in Node ${Math.floor(Math.random()*passwordBuffer.length)+1}. RECALIBRATE ENTIRE ARRAY.`);
+                location.reload();
+            }
+        }, 200);
     };
 </script>
 </body>
